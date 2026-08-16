@@ -8,11 +8,18 @@ I did all device tests on an MV7 with a USB connection to the computer. That mic
 package version 1.2.17 at the start. Section 6.3 of `firmware.md` gives the update that I did with
 my own tool at the end of this work. The microphone now has package 1.2.19.
 
+**Live tool: [the MV7 WebHID console](https://schlarpc.github.io/shure-mv7-firmware-re/).**
+A web page speaks the vendor HID protocol directly. It gives controls for the audio settings, the
+DSP, the panel and the LEDs, plus a terminal to the command console. It needs a Chromium browser
+and a connected microphone. It sends no firmware. The page is [`web/index.html`](web/index.html)
+and it has no dependencies.
+
 | Document | Contents |
 |---|---|
 | [`hid-protocol.md`](hid-protocol.md) | The vendor HID protocol: transport, frames, all commands, asynchronous events |
 | [`firmware.md`](firmware.md) | Firmware container, silicon, memory map, architecture, DSP, update method |
 | [`security.md`](security.md) | Security faults, with one crash that I caused on the device |
+| [`web/index.html`](web/index.html) | WebHID console: controls and a terminal, in one HTML file |
 | [`tools/mv7ctl.py`](tools/mv7ctl.py) | Client for the console protocol |
 | [`tools/mv7update.py`](tools/mv7update.py) | Firmware updater: pre-flight, DSP upload, MCU flash |
 | [`tools/sigmadsp_disasm.py`](tools/sigmadsp_disasm.py) | SigmaDSP program decoder |
