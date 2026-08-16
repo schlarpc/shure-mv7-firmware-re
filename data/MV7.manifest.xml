@@ -1,0 +1,13 @@
+<!-- Manifest file for MV7, package version 1.2.19  -->
+
+<PackageContents>
+    <Key>MV7</Key>
+    <Version>1.2.19</Version>
+    <FullVersion>1.2.19.0</FullVersion>
+    <File type="A" version="0.0.52.0">MonoIn_StereoOut_24b_96KHz_1.cyacd</File>
+    <File type="B" version="0.0.52.0">MonoIn_StereoOut_24b_96KHz_2.cyacd</File>
+    <File type="D" version="0.0.5.22">DSP-MV7.dat</File>
+    <File type="E" version="0.0.5.22">DSP-Settings-MV7.xml</File>
+    <DCID>04F37A8C-FD5A-11E3-ACBA-0015C5F3F612</DCID>
+</PackageContents>
+

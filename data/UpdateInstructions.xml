@@ -1,0 +1,46 @@
+<!-- Update Instructions file for MV7, package version 1.2.19 -->
+
+<UpdateInstructions>
+    <UpdateOperation>
+        <Name>UploadCommand</Name>
+        <Arg>PRIMARY</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+    <UpdateOperation>
+        <Name>Copy</Name>
+        <Arg>MV7.embeddedManifest.hex</Arg>
+        <Arg>0x00</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+    <UpdateOperation>
+        <Name>Copy</Name>
+        <Arg>MonoIn_StereoOut_24b_96KHz_1.cyacd</Arg>
+        <Arg>MonoIn_StereoOut_24b_96KHz_1.cyacd</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+    <UpdateOperation>
+        <Name>Copy</Name>
+        <Arg>MonoIn_StereoOut_24b_96KHz_2.cyacd</Arg>
+        <Arg>MonoIn_StereoOut_24b_96KHz_2.cyacd</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+    <UpdateOperation>
+        <Name>Copy</Name>
+        <Arg>DSP-MV7.dat</Arg>
+        <Arg>DSP-MV7.dat</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+    <UpdateOperation>
+        <Name>Copy</Name>
+        <Arg>DSP-Settings-MV7.xml</Arg>
+        <Arg>DSP-Settings-MV7.xml</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+    <UpdateOperation>
+        <Name>Execute</Name>
+        <Arg>PRIMARY</Arg>
+        <Arg>1.2.19</Arg>
+        <OnError>Abort</OnError>
+    </UpdateOperation>
+
+</UpdateInstructions>

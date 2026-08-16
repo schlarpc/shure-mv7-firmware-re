@@ -1,0 +1,386 @@
+[
+ {
+  "addr": 104628,
+  "name": "audioMute",
+  "handler": 15884,
+  "args": "[on|off]",
+  "help": "Get/Set Audio Mute",
+  "level": 0
+ },
+ {
+  "addr": 104648,
+  "name": "micMute",
+  "handler": 15740,
+  "args": "[on|off]",
+  "help": "Get/Set Mic Mute",
+  "level": 0
+ },
+ {
+  "addr": 104668,
+  "name": "volume",
+  "handler": 16000,
+  "args": "[-24...0]|up|down",
+  "help": "Get/Set Speaker Volume in dB",
+  "level": 0
+ },
+ {
+  "addr": 104688,
+  "name": "inputGain",
+  "handler": 16176,
+  "args": "[0...+36]",
+  "help": "Get/Set Recording Gain in dB",
+  "level": 0
+ },
+ {
+  "addr": 104708,
+  "name": "fwVersion",
+  "handler": 18504,
+  "args": "",
+  "help": "Get Firmware Version",
+  "level": 0
+ },
+ {
+  "addr": 104728,
+  "name": "serialNum",
+  "handler": 18532,
+  "args": "",
+  "help": "Get Silicon Generated Serial Number",
+  "level": 1
+ },
+ {
+  "addr": 104748,
+  "name": "dspMode",
+  "handler": 17064,
+  "args": "[1...7]",
+  "help": "Get/Set DSP mode number",
+  "level": 1
+ },
+ {
+  "addr": 104768,
+  "name": "dspVersion",
+  "handler": 19336,
+  "args": "",
+  "help": "Get DSP Version",
+  "level": 0
+ },
+ {
+  "addr": 104788,
+  "name": "bootDSP",
+  "handler": 19588,
+  "args": "[C]",
+  "help": "reboot DSP to default",
+  "level": 1
+ },
+ {
+  "addr": 104808,
+  "name": "getSampleRate",
+  "handler": 18392,
+  "args": "[in|out]",
+  "help": "Get Sample Rate and bit depth",
+  "level": 1
+ },
+ {
+  "addr": 104828,
+  "name": "getBlock",
+  "handler": 49084,
+  "args": "blockId",
+  "help": "Response: block Id dataString",
+  "level": 2
+ },
+ {
+  "addr": 104848,
+  "name": "setBlock",
+  "handler": 19140,
+  "args": "blockId dataString",
+  "help": "Response: block Id dataString",
+  "level": 2
+ },
+ {
+  "addr": 104868,
+  "name": "getEE",
+  "handler": 44032,
+  "args": "addr [count]",
+  "help": "Read EEPROM",
+  "level": 3
+ },
+ {
+  "addr": 104888,
+  "name": "setEE",
+  "handler": 44460,
+  "args": "addr value",
+  "help": "Write EEPROM",
+  "level": 3
+ },
+ {
+  "addr": 104908,
+  "name": "bootLoad",
+  "handler": 19696,
+  "args": "",
+  "help": "Run Bootload",
+  "level": 3
+ },
+ {
+  "addr": 104928,
+  "name": "pkgVersion",
+  "handler": 16572,
+  "args": "[pkgVer fwVer dspVer]",
+  "help": "Get/Set Package Version",
+  "level": 0
+ },
+ {
+  "addr": 104948,
+  "name": "lock",
+  "handler": 19176,
+  "args": "[on|off]",
+  "help": "lock/unlock user settings",
+  "level": 2
+ },
+ {
+  "addr": 104968,
+  "name": "myCID",
+  "handler": 16312,
+  "args": "",
+  "help": "Get Device CID string",
+  "level": 1
+ },
+ {
+  "addr": 104988,
+  "name": "dimMode",
+  "handler": 19848,
+  "args": "[on|off]",
+  "help": "Get/Set Dim LEDs Mode",
+  "level": 2
+ },
+ {
+  "addr": 105008,
+  "name": "meterMode",
+  "handler": 19968,
+  "args": "[on|off]",
+  "help": "Get/Set Audio Meter Mode",
+  "level": 2
+ },
+ {
+  "addr": 105028,
+  "name": "rateMismatch",
+  "handler": 18364,
+  "args": "",
+  "help": "Get Sample Rate mismatch status",
+  "level": 1
+ },
+ {
+  "addr": 105048,
+  "name": "deviceType",
+  "handler": 19376,
+  "args": "",
+  "help": "Get Shure Device Category",
+  "level": 2
+ },
+ {
+  "addr": 105068,
+  "name": "interfaceId",
+  "handler": 18768,
+  "args": "",
+  "help": "Get Shure Device Interface ID",
+  "level": 2
+ },
+ {
+  "addr": 105088,
+  "name": "identify",
+  "handler": 19300,
+  "args": "",
+  "help": "Flash active device for two seconds",
+  "level": 0
+ },
+ {
+  "addr": 105108,
+  "name": "disableUI",
+  "handler": 18936,
+  "args": "[on|off]",
+  "help": "dis/enable Captouch Panel",
+  "level": 3
+ },
+ {
+  "addr": 105128,
+  "name": "hwMute",
+  "handler": 20088,
+  "args": "[on|off]",
+  "help": "Mute HP Anolog Output",
+  "level": 3
+ },
+ {
+  "addr": 105148,
+  "name": "dspPower",
+  "handler": 50772,
+  "args": "[on|off]",
+  "help": "DSP Power on(VA_EN_n=0)/off(VA_EN_n=1)",
+  "level": 3
+ },
+ {
+  "addr": 105168,
+  "name": "getDSP",
+  "handler": 49892,
+  "args": "startAddr [endAddr]",
+  "help": "addr:0-03FF(07FF)/1000-1FFF(3FFF)(4BYTE), 4000-4007/4008-40FA",
+  "level": 3
+ },
+ {
+  "addr": 105188,
+  "name": "setDSP",
+  "handler": 50520,
+  "args": "addr value",
+  "help": "addr:0-03FF(07FF)/1000-1FFF(3FFF)(4BYTE), 4000-4007/4008-40FA",
+  "level": 3
+ },
+ {
+  "addr": 105208,
+  "name": "ledTest",
+  "handler": 19444,
+  "args": "[on|off]",
+  "help": "Set Led test mode",
+  "level": 3
+ },
+ {
+  "addr": 105228,
+  "name": "buttonTest",
+  "handler": 18820,
+  "args": "[on|off]",
+  "help": "Set button test mode",
+  "level": 3
+ },
+ {
+  "addr": 105248,
+  "name": "getLed",
+  "handler": 17352,
+  "args": "ChipN RegN",
+  "help": "Read Led Reg",
+  "level": 3
+ },
+ {
+  "addr": 105268,
+  "name": "setLed",
+  "handler": 17464,
+  "args": "ChipN RegN value",
+  "help": "Config Led Reg",
+  "level": 3
+ },
+ {
+  "addr": 105288,
+  "name": "myLed",
+  "handler": 17576,
+  "args": "ledId",
+  "help": "get Led state(on/off/flashing)",
+  "level": 3
+ },
+ {
+  "addr": 105308,
+  "name": "turnLed",
+  "handler": 17208,
+  "args": "ledId on/off",
+  "help": "Turn Led on/off",
+  "level": 3
+ },
+ {
+  "addr": 105328,
+  "name": "flashLed",
+  "handler": 17688,
+  "args": "ledId on/off durationMs onTime offTime",
+  "help": "Blink Led on/off",
+  "level": 3
+ },
+ {
+  "addr": 105348,
+  "name": "brightness",
+  "handler": 17932,
+  "args": "ledId percent",
+  "help": "Set Led brightness",
+  "level": 3
+ },
+ {
+  "addr": 105368,
+  "name": "fileLoc",
+  "handler": 18056,
+  "args": "fileID",
+  "help": "Get DSP file EE address, name and version",
+  "level": 3
+ },
+ {
+  "addr": 105388,
+  "name": "getSN",
+  "handler": 18564,
+  "args": "",
+  "help": "Get Board Serial Number",
+  "level": 1
+ },
+ {
+  "addr": 105408,
+  "name": "setSN",
+  "handler": 19744,
+  "args": "Board number String(26)",
+  "help": "Set Board Serial Number",
+  "level": 3
+ },
+ {
+  "addr": 105428,
+  "name": "getSAPSN",
+  "handler": 18664,
+  "args": "",
+  "help": "Get Shure SAP Number",
+  "level": 1
+ },
+ {
+  "addr": 105448,
+  "name": "setSAPSN",
+  "handler": 20156,
+  "args": "Shure SAP number String(11)",
+  "help": "Set Shure SAP Number",
+  "level": 3
+ },
+ {
+  "addr": 105468,
+  "name": "getApple",
+  "handler": 19048,
+  "args": "Dev",
+  "help": "Test Coprocessor status",
+  "level": 3
+ },
+ {
+  "addr": 105488,
+  "name": "?",
+  "handler": 42896,
+  "args": "",
+  "help": "",
+  "level": 0
+ },
+ {
+  "addr": 105508,
+  "name": "help",
+  "handler": 42896,
+  "args": "",
+  "help": "",
+  "level": 0
+ },
+ {
+  "addr": 105528,
+  "name": "su",
+  "handler": 42796,
+  "args": "",
+  "help": "",
+  "level": 0
+ },
+ {
+  "addr": 105548,
+  "name": "logDebug",
+  "handler": 18224,
+  "args": "",
+  "help": "",
+  "level": 3
+ },
+ {
+  "addr": 105568,
+  "name": "update",
+  "handler": 45108,
+  "args": "",
+  "help": "",
+  "level": 0
+ }
+]

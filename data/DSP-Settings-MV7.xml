@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+<DSP_advanced_settings ver="00.00.05.22">
+	<block ID="19" flag="03" name="Compressor_Select">
+		<option DSP="00000000" ENUM="0" GUI="Off"/>
+		<option DSP="00000001" ENUM="1" GUI="Light"/>
+		<option DSP="00000002" ENUM="2" GUI="Medium"/>
+		<option DSP="00000003" ENUM="3" GUI="Heavy"/>
+	</block>
+	<block ID="1F" flag="03" name="Limiter_Select">
+		<option DSP="00000000" ENUM="0" GUI="Off"/>
+		<option DSP="00000001" ENUM="1" GUI="On"/>
+	</block>
+	<block ID="31" flag="03" name="SM7_EQ_Select">
+		<option DSP="00000000" ENUM="0" GUI="Off"/>
+		<option DSP="00000001" ENUM="1" GUI="HighPass"/>
+		<option DSP="00000002" ENUM="2" GUI="Presence"/>
+		<option DSP="00000003" ENUM="3" GUI="HighPass and Presence"/>
+	</block>
+	<block ID="22" flag="02" name="Monitor_Mix">
+		<option DSP="000020C5004026E7" ENUM="0" GUI="Mic 1"/>
+		<option DSP="000020C4004026E7" ENUM="1" GUI="Mic 2"/>
+		<option DSP="00004161004026E7" ENUM="2" GUI="Mic 3"/>
+		<option DSP="00008274004026E7" ENUM="3" GUI="Mic 4"/>
+		<option DSP="00010449004026E7" ENUM="4" GUI="Mic 5"/>
+		<option DSP="00020756004026E7" ENUM="5" GUI="Mic 6"/>
+		<option DSP="00040C37004026E7" ENUM="6" GUI="Mic 7"/>
+		<option DSP="0005B7B1004026E7" ENUM="7" GUI="Mic  8"/>
+		<option DSP="00081385004026E7" ENUM="8" GUI="Mic 9"/>
+		<option DSP="000B6873004026E7" ENUM="9" GUI="Mic 10"/>
+		<option DSP="00101D3F004026E7" ENUM="10" GUI="Mic 11"/>
+		<option DSP="00144961004026E7" ENUM="11" GUI="Mic 12"/>
+		<option DSP="00198A13004026E7" ENUM="12" GUI="Mic 13"/>
+		<option DSP="002026F3004026E7" ENUM="13" GUI="Midpoint"/>
+		<option DSP="002026F30032F52D" ENUM="14" GUI="Monitor 13"/>
+		<option DSP="002026F300287A27" ENUM="15" GUI="Monitor 12"/>
+		<option DSP="002026F3002026F3" ENUM="16" GUI="Monitor 11"/>
+		<option DSP="002026F30016C311" ENUM="17" GUI="Monitor 10"/>
+		<option DSP="002026F300101D3F" ENUM="18" GUI="Monitor 9"/>
+		<option DSP="002026F3000B6873" ENUM="19" GUI="Monitor 8"/>
+		<option DSP="002026F300081385" ENUM="20" GUI="Monitor 7"/>
+		<option DSP="002026F300040C37" ENUM="21" GUI="Monitor 6"/>
+		<option DSP="002026F300020756" ENUM="22" GUI="Monitor 5"/>
+		<option DSP="002026F300010449" ENUM="23" GUI="Monitor 4"/>
+		<option DSP="002026F300008274" ENUM="24" GUI="Monitor 3"/>
+		<option DSP="002026F300004161" ENUM="25" GUI="Monitor 2"/>
+		<option DSP="002026F3000020C5" ENUM="26" GUI="Monitor 1"/>
+	</block>
+	<block ID="99" flag="03" name="DSP_Bypass">
+		<option DSP="0080000000000000" ENUM="0" GUI="Off"/>
+		<option DSP="0000000000800000" ENUM="1" GUI="On"/>
+	</block>
+	<block ID="02" flag="03" name="Deess_OnOff">
+		<option DSP="0000000000800000" ENUM="0" GUI="Off"/>
+		<option DSP="0080000000000000" ENUM="1" GUI="On"/>
+	</block>
+	<block ID="03" flag="03" name="BassTame_OnOff">
+		<option DSP="0000000000800000" ENUM="0" GUI="Off"/>
+		<option DSP="0080000000000000" ENUM="1" GUI="On"/>
+	</block>
+	<block ID="21" flag="03" name="ALC">
+		<option DSP="009E250E" ENUM="0" GUI="Off"/>
+		<option DSP="2B9E252E" ENUM="1" GUI="Max gain 18"/>
+		<option DSP="339E252E" ENUM="2" GUI="Max Gain 24"/>
+		<option DSP="3B9E252E" ENUM="3" GUI="Max gain 30"/>
+	</block>
+	<block ID="32" flag="03" name="Deess_Select">
+		<option DSP="00000000" ENUM="0" GUI="Setting 1"/>
+		<option DSP="00000001" ENUM="1" GUI="Setting 2"/>
+		<option DSP="00000002" ENUM="2" GUI="Setting 3"/>
+	</block>
+	<block ID="33" flag="03" name="Bass_Tame_Select">
+		<option DSP="00000000" ENUM="0" GUI="Setting 1"/>
+		<option DSP="00000001" ENUM="1" GUI="Setting 2"/>
+	</block>
+	<block ID="34" flag="03" name="Dynamics_Mode_EQ_Select">
+		<option DSP="00000000" ENUM="0" GUI="Off"/>
+		<option DSP="00000001" ENUM="1" GUI="Close Neutral"/>
+		<option DSP="00000002" ENUM="2" GUI="Close Dark"/>
+		<option DSP="00000003" ENUM="3" GUI="Close Bright"/>
+		<option DSP="00000004" ENUM="4" GUI="Far Neutral"/>
+		<option DSP="00000005" ENUM="5" GUI="Far Dark"/>
+		<option DSP="00000006" ENUM="6" GUI="Far Bright"/>
+	</block>
+</DSP_advanced_settings>
