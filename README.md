@@ -259,3 +259,17 @@ If you do not want to use `sudo`, install this udev rule:
 ```
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="14ed", ATTRS{idProduct}=="1012", MODE="0660", GROUP="users"
 ```
+
+---
+
+## License
+
+The tools and the documents in this repository are under the MIT license. See
+[`LICENSE`](LICENSE).
+
+That license covers this work only. The small manifest files under `data/` are extracts from a
+Shure firmware package and stay the property of Shure Incorporated. This repository holds no
+firmware image, no credential and no serial number. The script
+[`tools/fetch_packages.sh`](tools/fetch_packages.sh) downloads the packages from Shure.
+
+Shure, MOTIV and MV7 are trademarks of Shure Incorporated. This work has no connection with Shure.
