@@ -1,8 +1,11 @@
 name: Publish the WebHID console to GitHub Pages
 
 # The site is the single file in web/. Every push to main publishes it.
-# The configure step turns Pages on if the repository does not have it yet,
-# so a fresh clone or a fork needs no manual setting.
+#
+# Pages must exist with the "GitHub Actions" source before the first run. The
+# workflow token cannot create it, so do it once per fork with either the
+# repository settings or:
+#   gh api -X POST repos/OWNER/REPO/pages -f build_type=workflow
 
 on:
   push:
@@ -33,8 +36,6 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload web/
         uses: actions/upload-pages-artifact@v3
