@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shure MV7 — WebHID console</title>
+<style>
+:root{
+  --bg:#0e1116; --bg2:#151a21; --bg3:#1c232c; --line:#2a333f;
+  --fg:#dfe6ee; --dim:#8b98a8; --dim2:#6b7787;
+  --acc:#4da3ff; --ok:#4fd08a; --warn:#f0b849; --err:#ff6b6b; --evt:#c78bff;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f4f6f9; --bg2:#fff; --bg3:#eef1f5; --line:#d5dbe3;
+    --fg:#1b2027; --dim:#5b6675; --dim2:#828d9b;
+    --acc:#0b62d0; --ok:#128a52; --warn:#9a6b00; --err:#c22; --evt:#7a3fc0;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+button,input,select{font:inherit;color:inherit}
+button{
+  background:var(--bg3); border:1px solid var(--line); border-radius:5px;
+  padding:4px 9px; cursor:pointer;
+}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled,input:disabled,select:disabled{opacity:.38;cursor:not-allowed}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.danger{border-color:#7d3a3a}
+button.danger:hover:not(:disabled){border-color:var(--err)}
+input[type=text],input[type=number],select{
+  background:var(--bg); border:1px solid var(--line); border-radius:5px; padding:4px 7px;
+}
+input[type=text]:focus,input[type=number]:focus,select:focus{outline:none;border-color:var(--acc)}
+input[type=range]{accent-color:var(--acc);width:100%}
+code,pre,.mono{font-family:var(--mono)}
+
+/* ---- layout ---- */
+header{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:9px 14px;background:var(--bg2);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20;
+}
+header h1{font-size:14px;margin:0;font-weight:600;letter-spacing:.2px}
+header .sub{color:var(--dim2);font-size:11px}
+.spacer{flex:1}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim2);flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 7px var(--ok)}
+.dot.busy{background:var(--warn)}
+.badge{
+  font:11px/1 var(--mono);padding:4px 7px;border-radius:4px;
+  background:var(--bg3);border:1px solid var(--line);color:var(--dim);
+}
+.badge.lvl3{color:var(--err);border-color:var(--err)}
+.badge.lvl2{color:var(--warn);border-color:var(--warn)}
+.badge.lvl1,.badge.lvl0{color:var(--ok);border-color:var(--ok)}
+
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,44%);gap:12px;padding:12px;align-items:start}
+@media (max-width:1100px){main{grid-template-columns:1fr}}
+
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.card>h2{
+  margin:0;padding:8px 12px;font-size:12px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--dim);background:var(--bg3);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;
+}
+.card>h2 .req{font:10px/1 var(--mono);text-transform:none;letter-spacing:0;color:var(--dim2)}
+.card>h2 .spacer{flex:1}
+.body{padding:10px 12px}
+.row{display:flex;align-items:center;gap:8px;padding:4px 0;flex-wrap:wrap}
+.row>label,.row>.lbl{width:112px;flex:none;color:var(--dim);font-size:12px}
+.row .grow{flex:1;min-width:90px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.kv{display:flex;gap:8px;padding:2px 0;font-size:12px;align-items:baseline}
+.kv .k{width:104px;flex:none;color:var(--dim)}
+.kv .v{font-family:var(--mono);word-break:break-all;color:var(--fg)}
+.hint{color:var(--dim2);font-size:11px;margin:6px 0 0}
+.warnbox{border-left:2px solid var(--warn);padding:6px 9px;margin:8px 0 0;color:var(--dim);font-size:11.5px;background:var(--bg3)}
+pre.out{
+  margin:8px 0 0;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  font-size:11.5px;max-height:260px;overflow:auto;white-space:pre;
+}
+.seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{border:none;border-radius:0;background:transparent;padding:4px 11px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.sel{background:var(--acc);color:#fff}
+.gated{display:none}
+.chk{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim)}
+.chk input{accent-color:var(--acc)}
+
+/* ---- console ---- */
+#console{position:sticky;top:56px}
+#term{
+  height:min(calc(100vh - 210px),760px);overflow:auto;padding:8px 10px;
+  background:var(--bg);font-family:var(--mono);font-size:12px;line-height:1.5;
+}
+#term .l{white-space:pre-wrap;word-break:break-word}
+#term .tx{color:var(--acc)}
+#term .rx{color:var(--fg)}
+#term .ev{color:var(--evt)}
+#term .er{color:var(--err)}
+#term .sys{color:var(--dim2)}
+#term .raw{color:var(--dim2);font-size:11px}
+#term .tx::before{content:"> "}
+#term .ev::before{content:"! "}
+#term .er::before{content:"x "}
+#term .sys::before{content:"# "}
+.terminput{display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--line);background:var(--bg2)}
+.terminput input{flex:1;font-family:var(--mono)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 10px;border-top:1px solid var(--line);background:var(--bg2);font-size:11.5px;color:var(--dim)}
+.toolbar input[type=number]{width:66px}
+footer{padding:4px 14px 24px;color:var(--dim2);font-size:11px;max-width:900px}
+footer code{color:var(--dim)}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="dot" id="dot"></span>
+  <h1>Shure MV7 <span class="sub">WebHID vendor console</span></h1>
+  <span class="badge" id="devname">not connected</span>
+  <span class="badge" id="lvlbadge" title="privilege level of the console">su=?</span>
+  <span class="spacer"></span>
+  <span class="badge" id="fwbadge"></span>
+  <button id="btnconnect" class="primary">Connect</button>
+  <button id="btndisconnect" disabled>Disconnect</button>
+</header>
+
+<main>
+<!-- ================= LEFT: CONTROLS ================= -->
+<section id="panels">
+
+  <div class="card" id="c-unsupported" style="display:none">
+    <h2>WebHID unavailable</h2>
+    <div class="body">
+      <p style="margin:0">This browser has no <code>navigator.hid</code>. Use Chrome, Edge, or another
+      Chromium browser, and open this page from a secure origin
+      (<code>http://localhost/…</code> or <code>https://…</code>). A <code>file://</code> origin is
+      opaque and cannot be granted a device permission.</p>
+      <p class="hint">Hosted copy:
+      <a href="https://schlarpc.github.io/shure-mv7-firmware-re/">schlarpc.github.io/shure-mv7-firmware-re</a>.
+      To serve a local copy: <code>python3 -m http.server 8000</code> in this directory, then open
+      <code>http://localhost:8000/</code>.</p>
+    </div>
+  </div>
+
+  <!-- ---------- identity ---------- -->
+  <div class="card">
+    <h2>Device <span class="spacer"></span>
+      <button id="btnrefresh">Refresh all</button>
+    </h2>
+    <div class="body">
+      <div class="grid2" id="info"></div>
+      <div class="row" style="margin-top:8px">
+        <span class="lbl">Privilege</span>
+        <div class="seg" id="suseg">
+          <button data-su="nor">nor 0</button>
+          <button data-su="dev">dev 1</button>
+          <button data-su="adm">adm 2</button>
+          <button data-su="sup">sup 3</button>
+        </div>
+        <button id="btnsuread">read</button>
+      </div>
+      <p class="hint">The console has no password. <code>su &lt;name&gt;</code> sets the level outright;
+      an unknown name drops to <code>nor</code>. Power-on level comes from EEPROM byte <code>0x8D</code>
+      and is normally <code>adm</code>. Controls above your current level are disabled.</p>
+    </div>
+  </div>
+
+  <!-- ---------- audio ---------- -->
+  <div class="card">
+    <h2>Audio <span class="req">nor</span></h2>
+    <div class="body">
+      <div class="row">
+        <span class="lbl">Mic mute</span>
+        <div class="seg" data-toggle="micMute" data-level="0">
+          <button data-v="off">off</button><button data-v="on">on</button>
+        </div>
+        <span class="lbl" style="width:auto;margin-left:12px">Audio mute</span>
+        <div class="seg" data-toggle="audioMute" data-level="0">
+          <button data-v="off">off</button><button data-v="on">on</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="vol">Volume</label>
+        <input type="range" id="vol" class="grow" min="-24" max="0" step="1" value="0" data-level="0">
+        <span class="badge mono" id="volv" style="width:62px;text-align:right">—</span>
+        <button id="volup" data-level="0">up</button>
+        <button id="voldn" data-level="0">down</button>
+      </div>
+      <div class="row">
+        <label for="gain">Input gain</label>
+        <input type="range" id="gain" class="grow" min="0" max="36" step="1" value="0" data-level="0">
+        <span class="badge mono" id="gainv" style="width:62px;text-align:right">—</span>
+      </div>
+      <div class="row">
+        <span class="lbl">HP hw mute</span>
+        <div class="seg" data-toggle="hwMute" data-level="3">
+          <button data-v="off">off</button><button data-v="on">on</button>
+        </div>
+        <span class="badge">sup</span>
+        <span class="grow"></span>
+        <button id="btnrates" data-level="1">getSampleRate</button>
+        <button id="btnmismatch" data-level="1">rateMismatch</button>
+      </div>
+      <div class="row"><span class="lbl">Rates</span><span class="mono grow" id="rates">—</span></div>
+      <p class="hint">Volume is the headphone output, −24…0 dB. <code>up</code>/<code>down</code> step by 2 dB.
+      Input gain is 0…+36 dB in 1 dB steps. Moving the touch strip on the microphone sends an
+      unsolicited <code>volume=</code> event, so these track the hardware.</p>
+    </div>
+  </div>
+
+  <!-- ---------- dsp ---------- -->
+  <div class="card">
+    <h2>DSP <span class="req">dev / adm</span></h2>
+    <div class="body">
+      <div class="row">
+        <label for="dspmode">Preset</label>
+        <select id="dspmode" data-level="1">
+          <option value="">—</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+          <option>5</option><option>6</option><option>7</option>
+        </select>
+        <span class="hint" style="margin:0">MODE1–7.dat in EEPROM</span>
+        <span class="grow"></span>
+        <span class="lbl" style="width:auto">Lock</span>
+        <div class="seg" data-toggle="lock" data-level="2">
+          <button data-v="off">off</button><button data-v="on">on</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btnbootdsp" data-level="1">bootDSP</button>
+        <button id="btnbootdspc" data-level="1">bootDSP C</button>
+        <span class="lbl" style="width:auto;margin-left:8px">DSP power</span>
+        <div class="seg" data-toggle="dspPower" data-level="3">
+          <button data-v="off">off</button><button data-v="on">on</button>
+        </div>
+        <span class="badge">sup</span>
+      </div>
+      <p class="hint"><code>lock on</code> makes the device answer <code>Locked</code> and refuse preset
+      changes. <code>dspPower off</code> drops <code>VA_EN_n</code> and silences the codec.</p>
+    </div>
+  </div>
+
+  <!-- ---------- parameter blocks ---------- -->
+  <div class="card">
+    <h2>Parameter blocks <span class="req">adm</span><span class="spacer"></span>
+      <button id="btnblocks">Read all</button>
+    </h2>
+    <div class="body">
+      <div id="blocks"></div>
+      <div class="row" style="margin-top:8px;border-top:1px solid var(--line);padding-top:9px">
+        <span class="lbl">Raw</span>
+        <input type="text" id="blkid" class="mono" style="width:70px" placeholder="id hex" data-level="2">
+        <input type="text" id="blkdata" class="mono grow" placeholder="hex data (≤64 bytes)" data-level="2">
+        <button id="btnblkget" data-level="2">get</button>
+        <button id="btnblkset" data-level="2">set</button>
+      </div>
+      <div class="warnbox">Block IDs are <b>hexadecimal</b>. Never send a <code>getBlock</code> argument of
+      114 characters or more — the handler has a memory fault and the MCU resets. This page refuses
+      those client-side.</div>
+    </div>
+  </div>
+
+  <!-- ---------- panel / leds ---------- -->
+  <div class="card">
+    <h2>Panel &amp; LEDs <span class="req">adm / sup</span></h2>
+    <div class="body">
+      <div class="row">
+        <span class="lbl">Dim LEDs</span>
+        <div class="seg" data-toggle="dimMode" data-level="2"><button data-v="off">off</button><button data-v="on">on</button></div>
+        <span class="lbl" style="width:auto;margin-left:12px">Meter mode</span>
+        <div class="seg" data-toggle="meterMode" data-level="2"><button data-v="off">off</button><button data-v="on">on</button></div>
+      </div>
+      <div class="row">
+        <span class="lbl">Touch panel</span>
+        <div class="seg" data-toggle="disableUI" data-level="3"><button data-v="off">enabled</button><button data-v="on">disabled</button></div>
+        <span class="badge">sup</span>
+        <span class="grow"></span>
+        <button id="btnidentify" data-level="0">identify</button>
+      </div>
+      <div class="row">
+        <span class="lbl">Test modes</span>
+        <div class="seg" data-toggle="ledTest" data-level="3"><button data-v="off">led off</button><button data-v="on">led on</button></div>
+        <div class="seg" data-toggle="buttonTest" data-level="3"><button data-v="off">btn off</button><button data-v="on">btn on</button></div>
+        <span class="badge">sup</span>
+      </div>
+      <div class="row">
+        <span class="lbl">LED <span class="mono">id</span></span>
+        <input type="number" id="ledid" value="0" min="0" max="31" style="width:64px" data-level="3">
+        <button id="btnmyled" data-level="3">myLed</button>
+        <button id="btnledon" data-level="3">on</button>
+        <button id="btnledoff" data-level="3">off</button>
+        <input type="number" id="ledpct" value="50" min="0" max="100" style="width:64px" data-level="3">
+        <button id="btnledbright" data-level="3">brightness %</button>
+      </div>
+      <div class="row">
+        <span class="lbl">flashLed</span>
+        <input type="number" id="flms" value="2000" style="width:76px" title="duration ms" data-level="3">
+        <input type="number" id="flon" value="200" style="width:66px" title="on ms" data-level="3">
+        <input type="number" id="floff" value="200" style="width:66px" title="off ms" data-level="3">
+        <button id="btnflash" data-level="3">flash</button>
+      </div>
+      <div class="row">
+        <span class="lbl">Driver reg</span>
+        <input type="number" id="ledchip" value="0" style="width:60px" title="ChipN" data-level="3">
+        <input type="text" id="ledreg" value="0" class="mono" style="width:60px" title="RegN" data-level="3">
+        <input type="text" id="ledval" value="0" class="mono" style="width:60px" title="value" data-level="3">
+        <button id="btngetled" data-level="3">getLed</button>
+        <button id="btnsetled" data-level="3" data-write="1">setLed</button>
+      </div>
+      <p class="hint">LED ids and driver register numbers are not documented in the teardown — these are
+      free-form probes. <code>buttonTest on</code> makes the device emit
+      <code>MUTE_BUTTON PRESSED</code> / <code>SLIDER_UP</code> events into the console.</p>
+    </div>
+  </div>
+
+  <!-- ---------- eeprom ---------- -->
+  <div class="card">
+    <h2>EEPROM <span class="req">sup</span></h2>
+    <div class="body">
+      <div class="row">
+        <span class="lbl">Read</span>
+        <input type="text" id="eeaddr" class="mono" value="0x0080" style="width:92px" data-level="3">
+        <input type="number" id="eelen" value="256" min="1" max="8192" style="width:80px" data-level="3">
+        <button id="btneeread" data-level="3">dump</button>
+        <button id="btneesave" data-level="3" disabled>save .bin</button>
+        <span class="grow"></span>
+        <select id="eepreset" data-level="3">
+          <option value="">jump to…</option>
+          <option value="0x0080,16">0x0080 config (0x8D = boot level)</option>
+          <option value="0x0090,48">0x0090 versions</option>
+          <option value="0x00A4,40">0x00A4 board SN + SAP</option>
+          <option value="0x0180,24">0x0180 LED brightness curve</option>
+          <option value="0x0200,148">0x0200 block descriptors</option>
+          <option value="0x0ABF,44">0x0ABF update flags + slots</option>
+          <option value="0x0B00,44">0x0B00 file directory A</option>
+          <option value="0x0B80,44">0x0B80 file directory B</option>
+          <option value="0x5340,128">0x5340 CAPABILITIES.dat</option>
+        </select>
+      </div>
+      <div class="row">
+        <span class="lbl">Write</span>
+        <input type="text" id="eewaddr" class="mono" placeholder="addr" style="width:92px" data-level="3">
+        <input type="text" id="eewval" class="mono" placeholder="value" style="width:80px" data-level="3">
+        <button id="btneewrite" class="danger" data-level="3" data-write="1">setEE</button>
+        <span class="grow"></span>
+        <button id="btnfileloc" data-level="3">fileLoc table</button>
+      </div>
+      <pre class="out" id="eeout">—</pre>
+      <p class="hint">128 KB part; only <code>0x00000</code>–<code>0x054AE</code> holds data. Reads are split
+      into 256-byte commands and retried, because the device aligns each printed row down to a 16-byte
+      boundary. Byte <code>0x8D</code> is the power-on privilege level.</p>
+    </div>
+  </div>
+
+  <!-- ---------- dsp memory ---------- -->
+  <div class="card">
+    <h2>DSP memory <span class="req">sup</span></h2>
+    <div class="body">
+      <div class="row">
+        <span class="lbl">Read</span>
+        <input type="text" id="dspa" class="mono" value="0x0000" style="width:92px" data-level="3">
+        <input type="text" id="dspb" class="mono" value="0x00FF" style="width:92px" data-level="3">
+        <button id="btndspread" data-level="3">getDSP</button>
+        <span class="grow"></span>
+        <select id="dsppreset" data-level="3">
+          <option value="">range…</option>
+          <option value="0x0000,0x00FF">0x0000–0x00FF param RAM (words)</option>
+          <option value="0x1000,0x10FF">0x1000–0x10FF program RAM (words)</option>
+          <option value="0x4000,0x4007">0x4000–0x4007 registers (bytes)</option>
+          <option value="0x4008,0x40FA">0x4008–0x40FA registers (bytes)</option>
+        </select>
+      </div>
+      <div class="row">
+        <span class="lbl">Write</span>
+        <input type="text" id="dspwa" class="mono" placeholder="addr" style="width:92px" data-level="3">
+        <input type="text" id="dspwv" class="mono" placeholder="value" style="width:100px" data-level="3">
+        <button id="btndspwrite" class="danger" data-level="3" data-write="1">setDSP</button>
+      </div>
+      <pre class="out" id="dspout">—</pre>
+      <p class="hint">Valid ranges: <code>0x0000–0x07FF</code> and <code>0x1000–0x3FFF</code> as 32-bit words,
+      <code>0x4000–0x40FA</code> as bytes. <code>0x0800–0x0FFF</code> answers <code>ErrA</code>.
+      The part is an Analog Devices ADAU1761.</p>
+    </div>
+  </div>
+
+  <!-- ---------- factory ---------- -->
+  <div class="card">
+    <h2>Factory identity <span class="req">sup</span></h2>
+    <div class="body">
+      <div class="row">
+        <span class="lbl">Board SN</span>
+        <input type="text" id="snval" class="mono grow" maxlength="26" placeholder="26 characters" data-level="3">
+        <button id="btnsetsn" class="danger" data-level="3" data-write="1">setSN</button>
+      </div>
+      <div class="row">
+        <span class="lbl">SAP number</span>
+        <input type="text" id="sapval" class="mono grow" maxlength="11" placeholder="11 characters" data-level="3">
+        <button id="btnsetsap" class="danger" data-level="3" data-write="1">setSAPSN</button>
+      </div>
+      <div class="row">
+        <span class="lbl">Package ver</span>
+        <input type="text" id="pkgval" class="mono grow" placeholder="pkgVer fwVer dspVer" data-level="0">
+        <button id="btnsetpkg" class="danger" data-level="0" data-write="1">pkgVersion set</button>
+      </div>
+      <div class="row">
+        <span class="lbl">Apple MFi</span>
+        <input type="text" id="appledev" class="mono" value="0" style="width:70px" data-level="3">
+        <button id="btnapple" data-level="3">getApple</button>
+        <span class="grow"></span>
+        <button id="btnlogdebug" data-level="3">logDebug</button>
+      </div>
+      <div class="warnbox">These rewrite EEPROM. Enable <b>allow writes</b> in the console toolbar first,
+      and read the current values back before you change them.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ================= RIGHT: CONSOLE ================= -->
+<section id="console">
+  <div class="card" style="margin:0">
+    <h2>Console <span class="spacer"></span>
+      <span class="badge" id="qdepth">idle</span>
+    </h2>
+    <div id="term"></div>
+    <div class="terminput">
+      <input type="text" id="cmdline" placeholder="command (Tab completes, ↑/↓ history, /help)" autocomplete="off" spellcheck="false" disabled>
+      <button id="btnsend" disabled>Send</button>
+    </div>
+    <div class="toolbar">
+      <label class="chk"><input type="checkbox" id="optwrite"> allow writes</label>
+      <label class="chk"><input type="checkbox" id="optdanger"> allow bootLoad</label>
+      <label class="chk"><input type="checkbox" id="optraw"> show raw reports</label>
+      <label class="chk"><input type="checkbox" id="optevents" checked> show events</label>
+      <span class="spacer"></span>
+      <label class="chk">wait <input type="number" id="optwait" value="600" min="100" max="8000" step="50"> ms</label>
+      <label class="chk">idle <input type="number" id="optidle" value="150" min="40" max="2000" step="10"> ms</label>
+      <button id="btnclear">clear</button>
+      <button id="btncopy">copy</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  Vendor HID interface 3 of <code>14ed:1012</code>, usage page <code>0xFF00</code>: one 64-byte OUT report and
+  one 64-byte IN report, no report ID. A command is ASCII terminated by NUL, at most 127 characters,
+  split across reports at 64 bytes. Replies are NUL-terminated ASCII with no end-of-reply marker, so this
+  page reads until the endpoint goes quiet. Protocol from
+  <a href="https://github.com/schlarpc/shure-mv7-firmware-re/blob/main/hid-protocol.md"><code>hid-protocol.md</code></a>;
+  block names from <code>data/DSP-Settings-MV7.xml</code>.
+  <code>update</code> is blocked — this page does no firmware upload.
+  <br><br>
+  <b>Linux permissions.</b> The browser lists the device from sysfs but opens <code>/dev/hidraw*</code>,
+  which is root-only by default, so the chooser succeeds and the open fails. Give your seat access with
+  a udev rule:
+  <code>SUBSYSTEM=="hidraw", ATTRS{idVendor}=="14ed", ATTRS{idProduct}=="1012", MODE="0660", TAG+="uaccess"</code>
+  — on NixOS put that in <code>services.udev.extraRules</code>. Then
+  <code>sudo udevadm control --reload &amp;&amp; sudo udevadm trigger</code>, or replug the microphone.
+  The MV7 shows two hidraw nodes; the one this page wants has a report descriptor starting
+  <code>06 00 ff</code>.
+  Source: <a href="https://github.com/schlarpc/shure-mv7-firmware-re">schlarpc/shure-mv7-firmware-re</a>.
+</footer>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   Protocol constants and tables
+   ========================================================================= */
+const VID = 0x14ed, PID = 0x1012, USAGE_PAGE = 0xff00, USAGE = 0x01;
+const REPORT_LEN = 64, MAX_LINE = 127;
+const LEVELS = ["nor", "dev", "adm", "sup"];
+
+/* The 48-entry command table at 0x000198b4 (cmdtable.json). */
+const CMDS = [
+  ["audioMute","[on|off]","Get/Set Audio Mute",0],
+  ["micMute","[on|off]","Get/Set Mic Mute",0],
+  ["volume","[-24...0]|up|down","Get/Set Speaker Volume in dB",0],
+  ["inputGain","[0...+36]","Get/Set Recording Gain in dB",0],
+  ["fwVersion","","Get Firmware Version",0],
+  ["serialNum","","Get Silicon Generated Serial Number",1],
+  ["dspMode","[1...7]","Get/Set DSP mode number",1],
+  ["dspVersion","","Get DSP Version",0],
+  ["bootDSP","[C]","reboot DSP to default",1],
+  ["getSampleRate","[in|out]","Get Sample Rate and bit depth",1],
+  ["getBlock","blockId","Response: block Id dataString",2],
+  ["setBlock","blockId dataString","Response: block Id dataString",2],
+  ["getEE","addr [count]","Read EEPROM",3],
+  ["setEE","addr value","Write EEPROM",3],
+  ["bootLoad","","Run Bootload",3],
+  ["pkgVersion","[pkgVer fwVer dspVer]","Get/Set Package Version",0],
+  ["lock","[on|off]","lock/unlock user settings",2],
+  ["myCID","","Get Device CID string",1],
+  ["dimMode","[on|off]","Get/Set Dim LEDs Mode",2],
+  ["meterMode","[on|off]","Get/Set Audio Meter Mode",2],
+  ["rateMismatch","","Get Sample Rate mismatch status",1],
+  ["deviceType","","Get Shure Device Category",2],
+  ["interfaceId","","Get Shure Device Interface ID",2],
+  ["identify","","Flash active device for two seconds",0],
+  ["disableUI","[on|off]","dis/enable Captouch Panel",3],
+  ["hwMute","[on|off]","Mute HP Analog Output",3],
+  ["dspPower","[on|off]","DSP Power on(VA_EN_n=0)/off(VA_EN_n=1)",3],
+  ["getDSP","startAddr [endAddr]","0-03FF(07FF)/1000-1FFF(3FFF) words, 4000-40FA bytes",3],
+  ["setDSP","addr value","same ranges as getDSP",3],
+  ["ledTest","[on|off]","Set Led test mode",3],
+  ["buttonTest","[on|off]","Set button test mode",3],
+  ["getLed","ChipN RegN","Read Led Reg",3],
+  ["setLed","ChipN RegN value","Config Led Reg",3],
+  ["myLed","ledId","get Led state(on/off/flashing)",3],
+  ["turnLed","ledId on/off","Turn Led on/off",3],
+  ["flashLed","ledId on/off durationMs onTime offTime","Blink Led",3],
+  ["brightness","ledId percent","Set Led brightness",3],
+  ["fileLoc","fileID","Get DSP file EE address, name and version",3],
+  ["getSN","","Get Board Serial Number",1],
+  ["setSN","Board number String(26)","Set Board Serial Number",3],
+  ["getSAPSN","","Get Shure SAP Number",1],
+  ["setSAPSN","Shure SAP number String(11)","Set Shure SAP Number",3],
+  ["getApple","Dev","Test Coprocessor status",3],
+  ["?","","(hidden) same as help",0],
+  ["help","","(hidden) list commands at or below current level",0],
+  ["su","[nor|dev|adm|sup]","(hidden) get/set privilege level",0],
+  ["logDebug","","(hidden) debug log control",3],
+  ["update","","(hidden) start a file upload",0],
+];
+const CMD_BY_NAME = new Map(CMDS.map(c => [c[0], c]));
+
+/* DSP parameter blocks, from DSP-Settings-MV7.xml. IDs are hexadecimal. */
+const BLOCKS = [
+  {id:"02", name:"De-ess on/off",       opts:[["0000000000800000","Off"],["0080000000000000","On"]]},
+  {id:"03", name:"Bass tame on/off",    opts:[["0000000000800000","Off"],["0080000000000000","On"]]},
+  {id:"19", name:"Compressor",          opts:[["00000000","Off"],["00000001","Light"],["00000002","Medium"],["00000003","Heavy"]]},
+  {id:"1F", name:"Limiter",             opts:[["00000000","Off"],["00000001","On"]]},
+  {id:"21", name:"ALC",                 opts:[["009E250E","Off"],["2B9E252E","Max gain 18"],["339E252E","Max gain 24"],["3B9E252E","Max gain 30"]]},
+  {id:"22", name:"Monitor mix",         opts:[
+      ["000020C5004026E7","Mic 1"],["000020C4004026E7","Mic 2"],["00004161004026E7","Mic 3"],
+      ["00008274004026E7","Mic 4"],["00010449004026E7","Mic 5"],["00020756004026E7","Mic 6"],
+      ["00040C37004026E7","Mic 7"],["0005B7B1004026E7","Mic 8"],["00081385004026E7","Mic 9"],
+      ["000B6873004026E7","Mic 10"],["00101D3F004026E7","Mic 11"],["00144961004026E7","Mic 12"],
+      ["00198A13004026E7","Mic 13"],["002026F3004026E7","Midpoint"],["002026F30032F52D","Monitor 13"],
+      ["002026F300287A27","Monitor 12"],["002026F3002026F3","Monitor 11"],["002026F30016C311","Monitor 10"],
+      ["002026F300101D3F","Monitor 9"],["002026F3000B6873","Monitor 8"],["002026F300081385","Monitor 7"],
+      ["002026F300040C37","Monitor 6"],["002026F300020756","Monitor 5"],["002026F300010449","Monitor 4"],
+      ["002026F300008274","Monitor 3"],["002026F300004161","Monitor 2"],["002026F3000020C5","Monitor 1"]]},
+  {id:"31", name:"SM7 EQ",              opts:[["00000000","Off"],["00000001","HighPass"],["00000002","Presence"],["00000003","HighPass + Presence"]]},
+  {id:"32", name:"De-ess setting",      opts:[["00000000","Setting 1"],["00000001","Setting 2"],["00000002","Setting 3"]]},
+  {id:"33", name:"Bass tame setting",   opts:[["00000000","Setting 1"],["00000001","Setting 2"]]},
+  {id:"34", name:"Dynamics / mode EQ",  opts:[["00000000","Off"],["00000001","Close Neutral"],["00000002","Close Dark"],
+                                              ["00000003","Close Bright"],["00000004","Far Neutral"],["00000005","Far Dark"],
+                                              ["00000006","Far Bright"]]},
+  {id:"99", name:"DSP bypass",          opts:[["0080000000000000","Off"],["0000000000800000","On"]]},
+];
+
+/* Read-only identity fields shown in the Device card. */
+const INFO_FIELDS = [
+  ["fwVersion","Firmware",0], ["dspVersion","DSP",0], ["pkgVersion","Package",0],
+  ["serialNum","Silicon SN",1], ["getSN","Board SN",1], ["getSAPSN","SAP",1],
+  ["myCID","CID",1], ["deviceType","Device type",2], ["interfaceId","Interface ID",2],
+];
+
+/* Commands this page will not send. */
+const BLOCKED = {
+  update: "this page has no firmware-upload path; `update` would leave the console in raw " +
+          "data mode and swallow the next line. Use tools/mv7update.py.",
+};
+/* Commands that rewrite persistent state; gated on the 'allow writes' checkbox. */
+const WRITE_CMDS = new Set(["setEE","setSN","setSAPSN","setDSP","setLed"]);
+
+/* =========================================================================
+   Transport
+   ========================================================================= */
+const enc = new TextEncoder(), dec = new TextDecoder("latin1");
+
+function reportText(bytes) {
+  let end = bytes.indexOf(0);
+  if (end < 0) end = bytes.length;
+  return dec.decode(bytes.subarray(0, end));
+}
+function hexdumpBytes(b) {
+  return Array.from(b, x => x.toString(16).padStart(2, "0")).join(" ");
+}
+
+class MV7 {
+  constructor(device) {
+    this.dev = device;
+    this.pending = null;
+    this.tail = Promise.resolve();
+    this.onEvent = () => {};
+    this.onRaw = () => {};
+    this.onBusy = () => {};
+    this._handler = e => this._rx(e);
+  }
+
+  async open() {
+    if (!this.dev.opened) await this.dev.open();
+    this.dev.addEventListener("inputreport", this._handler);
+  }
+  async close() {
+    this.dev.removeEventListener("inputreport", this._handler);
+    try { if (this.dev.opened) await this.dev.close(); } catch (_) {}
+  }
+
+  _rx(e) {
+    const bytes = new Uint8Array(e.data.buffer);
+    this.onRaw("<-", bytes);
+    const text = reportText(bytes);
+    if (this.pending) { this.pending.chunks.push(text); this.pending.bump(); }
+    else if (text.trim()) this.onEvent(text);
+  }
+
+  /* One command line in, assembled reply text out. Serialised: the device has a
+     single line buffer, so two commands in flight would concatenate. */
+  send(line, opts) {
+    const run = () => this._send(line, opts || {});
+    const p = this.tail.then(run, run);
+    this.tail = p.catch(() => {});
+    return p;
+  }
+
+  _send(line, { wait = 600, idle = 150, max = 12000 } = {}) {
+    if (line.length > MAX_LINE) {
+      return Promise.reject(new Error(`line is ${line.length} characters, limit is ${MAX_LINE}`));
+    }
+    return new Promise((resolve, reject) => {
+      const p = { chunks: [], timer: null, hard: null };
+      const finish = () => {
+        clearTimeout(p.timer); clearTimeout(p.hard);
+        this.pending = null; this.onBusy(false);
+        resolve(p.chunks.join(""));
+      };
+      p.bump = () => { clearTimeout(p.timer); p.timer = setTimeout(finish, idle); };
+      this.pending = p;
+      this.onBusy(true);
+
+      const payload = new Uint8Array(enc.encode(line).length + 1);
+      payload.set(enc.encode(line));            // trailing NUL terminates the line
+      (async () => {
+        for (let i = 0; i < payload.length; i += REPORT_LEN) {
+          const frame = new Uint8Array(REPORT_LEN);
+          frame.set(payload.subarray(i, i + REPORT_LEN));
+          this.onRaw("->", frame);
+          await this.dev.sendReport(0, frame);  // no report ID on this collection
+        }
+        p.timer = setTimeout(finish, wait);
+        p.hard = setTimeout(finish, max);
+      })().catch(err => {
+        clearTimeout(p.timer); clearTimeout(p.hard);
+        this.pending = null; this.onBusy(false);
+        reject(err);
+      });
+    });
+  }
+}
+
+/* =========================================================================
+   Console
+   ========================================================================= */
+const $ = id => document.getElementById(id);
+const term = $("term");
+
+function log(kind, text) {
+  if (text === "" || text == null) return;
+  const near = term.scrollHeight - term.scrollTop - term.clientHeight < 60;
+  for (const ln of String(text).replace(/\r/g, "").split("\n")) {
+    if (ln === "" ) continue;
+    const d = document.createElement("div");
+    d.className = "l " + kind;
+    d.textContent = ln;
+    term.appendChild(d);
+  }
+  while (term.childElementCount > 4000) term.removeChild(term.firstChild);
+  if (near) term.scrollTop = term.scrollHeight;
+}
+
+/* =========================================================================
+   State
+   ========================================================================= */
+let mv7 = null;
+let level = null;                       // 0..3, null when unknown
+const state = {};                       // last seen name=value pairs
+
+function setStatus(connected, name) {
+  $("dot").classList.toggle("on", !!connected);
+  $("devname").textContent = connected ? (name || "MV7") : "not connected";
+  $("btnconnect").disabled = !!connected;
+  $("btndisconnect").disabled = !connected;
+  $("cmdline").disabled = !connected;
+  $("btnsend").disabled = !connected;
+  if (!connected) { level = null; setLevel(null); }
+  applyGating();
+}
+
+function setLevel(l) {
+  level = l;
+  const b = $("lvlbadge");
+  b.className = "badge" + (l == null ? "" : " lvl" + l);
+  b.textContent = l == null ? "su=?" : `su=${LEVELS[l]} (${l})`;
+  for (const btn of document.querySelectorAll("#suseg button"))
+    btn.classList.toggle("sel", l != null && LEVELS[l] === btn.dataset.su);
+  applyGating();
+}
+
+/* Disable anything above the console's current level. */
+function applyGating() {
+  const writesOk = $("optwrite").checked;
+  /* `su` itself is level 0 and must stay reachable even before the level is known,
+     otherwise an unparsed `su` reply would lock the whole page out. */
+  for (const b of document.querySelectorAll("#suseg button")) b.disabled = !mv7;
+  for (const node of document.querySelectorAll("[data-level]")) {
+    const need = +node.dataset.level;
+    const isWrite = node.dataset.write === "1";
+    const ok = mv7 && level != null && level >= need && (!isWrite || writesOk);
+    if (node.classList.contains("seg")) {
+      for (const b of node.querySelectorAll("button")) b.disabled = !ok;
+    } else {
+      node.disabled = !ok;
+    }
+  }
+}
+
+/* Pull every name=value pair out of a reply or an event and apply it. */
+function parseKV(text) {
+  const out = {};
+  for (const m of text.matchAll(/([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\r\n]*)/g))
+    out[m[1]] = m[2].trim();
+  return out;
+}
+function applyState(text) {
+  const kv = parseKV(text);
+  for (const [k, v] of Object.entries(kv)) state[k] = v;
+  if (kv.su != null) {
+    const i = LEVELS.indexOf(kv.su.trim());
+    if (i >= 0) setLevel(i);
+  }
+  if (kv.volume != null) {
+    const n = parseInt(kv.volume, 10);
+    if (!isNaN(n)) { $("vol").value = n; $("volv").textContent = n + " dB"; }
+  }
+  if (kv.inputGain != null) {
+    const n = parseInt(kv.inputGain, 10);
+    if (!isNaN(n)) { $("gain").value = n; $("gainv").textContent = (n > 0 ? "+" : "") + n + " dB"; }
+  }
+  if (kv.dspMode != null) $("dspmode").value = kv.dspMode.trim();
+  for (const name of ["micMute","audioMute","hwMute","lock","dimMode","meterMode",
+                      "disableUI","ledTest","buttonTest","dspPower"]) {
+    if (kv[name] != null) markToggle(name, /on/i.test(kv[name]) ? "on" : "off");
+  }
+  if (kv.fwVersion != null) $("fwbadge").textContent = "fw " + kv.fwVersion;
+  const rates = ["CurrentRate","inRate","inDepth","outRate","outDepth","rateMismatch"]
+    .filter(k => state[k] != null).map(k => `${k}=${state[k]}`).join("  ");
+  if (rates) $("rates").textContent = rates;
+  for (const [cmd] of INFO_FIELDS) if (kv[cmd] != null) setInfo(cmd, kv[cmd]);
+  return kv;
+}
+function markToggle(name, v) {
+  const seg = document.querySelector(`[data-toggle="${name}"]`);
+  if (!seg) return;
+  for (const b of seg.querySelectorAll("button")) b.classList.toggle("sel", b.dataset.v === v);
+}
+
+/* =========================================================================
+   Command dispatch with the client-side guards
+   ========================================================================= */
+function guard(line) {
+  const name = line.trim().split(/[\s\t]+/)[0];
+  const rest = line.trim().slice(name.length).trim();
+  if (line.length > MAX_LINE)
+    return `refused: ${line.length} characters, the device line buffer takes ${MAX_LINE}`;
+  if (BLOCKED[name])
+    return `refused: ${name} is blocked — ${BLOCKED[name]}`;
+  if (name === "getBlock" && rest.length >= 114)
+    return "refused: a getBlock argument of 114+ characters faults the MCU and resets it";
+  if (name === "bootLoad" && !$("optdanger").checked)
+    return "refused: bootLoad starts the bootloader and the device stops answering the console. " +
+           "Tick 'allow bootLoad' if you can complete an update with tools/mv7update.py.";
+  if (WRITE_CMDS.has(name) && rest && !$("optwrite").checked)
+    return `refused: ${name} writes persistent state — tick 'allow writes' first`;
+  if (name === "pkgVersion" && rest && !$("optwrite").checked)
+    return "refused: pkgVersion with arguments rewrites the stored version — tick 'allow writes' first";
+  return null;
+}
+
+async function run(line, { quiet = false, wait, idle } = {}) {
+  if (!mv7) { log("er", "not connected"); return ""; }
+  const bad = guard(line);
+  if (bad) { log("er", bad); return ""; }
+  if (line.trim() === "bootLoad" &&
+      !confirm("bootLoad resets the MCU into the bootloader.\n\n" +
+               "The vendor HID console will not come back until a firmware image is loaded with " +
+               "tools/mv7update.py. Continue?")) {
+    log("sys", "bootLoad cancelled");
+    return "";
+  }
+  if (!quiet) log("tx", line);
+  let text = "";
+  try {
+    text = await mv7.send(line, { wait: wait ?? +$("optwait").value, idle: idle ?? +$("optidle").value });
+  } catch (err) {
+    log("er", String(err.message || err));
+    return "";
+  }
+  if (!quiet) log(/\[Failed\]|Invalid|Not valid|^Err[ACSDE]\b|No such command/m.test(text) ? "er" : "rx", text);
+  applyState(text);
+  return text;
+}
+
+/* value = trimmed right-hand side of `name=value`, else the whole reply */
+function valueOf(text, name) {
+  const m = text.match(new RegExp("^\\s*" + name + "\\s*=\\s*(.*)$", "m"));
+  return (m ? m[1] : text).replace(/[\r\n]+/g, " ").trim();
+}
+
+/* =========================================================================
+   UI: build the dynamic parts
+   ========================================================================= */
+for (const [cmd, label] of INFO_FIELDS) {
+  const d = document.createElement("div");
+  d.className = "kv";
+  d.innerHTML = `<span class="k">${label}</span><span class="v" id="info-${cmd}">—</span>`;
+  $("info").appendChild(d);
+}
+function setInfo(cmd, v) { const n = $("info-" + cmd); if (n) n.textContent = v || "—"; }
+
+for (const blk of BLOCKS) {
+  const row = document.createElement("div");
+  row.className = "row";
+  const sel = document.createElement("select");
+  sel.dataset.level = "2";
+  sel.innerHTML = `<option value="">—</option>` +
+    blk.opts.map(([d, g]) => `<option value="${d}">${g}</option>`).join("");
+  sel.id = "blk-" + blk.id;
+  sel.addEventListener("change", async () => {
+    if (!sel.value) return;
+    await run(`setBlock ${blk.id} ${sel.value}`);
+  });
+  row.innerHTML = `<span class="lbl" title="block 0x${blk.id}">${blk.name}</span>`;
+  row.appendChild(sel);
+  const btn = document.createElement("button");
+  btn.textContent = "get"; btn.dataset.level = "2";
+  btn.addEventListener("click", () => readBlock(blk));
+  row.appendChild(btn);
+  const span = document.createElement("span");
+  span.className = "mono"; span.style.color = "var(--dim2)"; span.style.fontSize = "11px";
+  span.id = "blkv-" + blk.id;
+  row.appendChild(span);
+  $("blocks").appendChild(row);
+}
+
+async function readBlock(blk) {
+  const text = await run(`getBlock ${blk.id}`);
+  const m = text.match(/block\s+([0-9A-Fa-f]+)\s+([0-9A-Fa-f]+)/);
+  const data = m ? m[2].toUpperCase() : null;
+  $("blkv-" + blk.id).textContent = data || "";
+  const sel = $("blk-" + blk.id);
+  sel.value = data && blk.opts.some(o => o[0] === data) ? data : "";
+  if (data && !sel.value) $("blkv-" + blk.id).textContent = data + " (not a listed option)";
+}
+
+/* toggles */
+for (const seg of document.querySelectorAll("[data-toggle]")) {
+  const name = seg.dataset.toggle;
+  for (const b of seg.querySelectorAll("button")) {
+    b.addEventListener("click", async () => {
+      const text = await run(`${name} ${b.dataset.v}`);
+      if (!/=/.test(text)) markToggle(name, b.dataset.v);
+    });
+  }
+}
+
+/* =========================================================================
+   UI: wiring
+   ========================================================================= */
+function on(id, ev, fn) { const n = $(id); if (n) n.addEventListener(ev, fn); }
+
+on("vol", "change", e => run(`volume ${e.target.value}`));
+on("vol", "input", e => $("volv").textContent = e.target.value + " dB");
+on("volup", "click", () => run("volume up"));
+on("voldn", "click", () => run("volume down"));
+on("gain", "change", e => run(`inputGain ${e.target.value}`));
+on("gain", "input", e => $("gainv").textContent = (e.target.value > 0 ? "+" : "") + e.target.value + " dB");
+on("dspmode", "change", e => e.target.value && run(`dspMode ${e.target.value}`));
+on("btnbootdsp", "click", () => run("bootDSP", { wait: 2000 }));
+on("btnbootdspc", "click", () => run("bootDSP C", { wait: 2000 }));
+on("btnidentify", "click", () => run("identify"));
+on("btnrates", "click", () => run("getSampleRate", { wait: 900 }));
+on("btnmismatch", "click", () => run("rateMismatch"));
+on("btnblocks", "click", async () => { for (const b of BLOCKS) await readBlock(b); });
+on("btnblkget", "click", () => run(`getBlock ${$("blkid").value.trim()}`));
+on("btnblkset", "click", () => run(`setBlock ${$("blkid").value.trim()} ${$("blkdata").value.trim()}`));
+on("btnmyled", "click", () => run(`myLed ${$("ledid").value}`));
+on("btnledon", "click", () => run(`turnLed ${$("ledid").value} on`));
+on("btnledoff", "click", () => run(`turnLed ${$("ledid").value} off`));
+on("btnledbright", "click", () => run(`brightness ${$("ledid").value} ${$("ledpct").value}`));
+on("btnflash", "click", () => run(`flashLed ${$("ledid").value} on ${$("flms").value} ${$("flon").value} ${$("floff").value}`));
+on("btngetled", "click", () => run(`getLed ${$("ledchip").value} ${$("ledreg").value}`));
+on("btnsetled", "click", () => run(`setLed ${$("ledchip").value} ${$("ledreg").value} ${$("ledval").value}`));
+on("btnapple", "click", () => run(`getApple ${$("appledev").value}`));
+on("btnlogdebug", "click", () => run("logDebug"));
+on("btnsuread", "click", () => run("su"));
+on("btnsetsn", "click", () => $("snval").value && run(`setSN ${$("snval").value}`));
+on("btnsetsap", "click", () => $("sapval").value && run(`setSAPSN ${$("sapval").value}`));
+on("btnsetpkg", "click", () => $("pkgval").value && run(`pkgVersion ${$("pkgval").value}`));
+on("btneewrite", "click", () => run(`setEE ${$("eewaddr").value} ${$("eewval").value}`));
+on("btndspwrite", "click", () => run(`setDSP ${$("dspwa").value} ${$("dspwv").value}`));
+on("optwrite", "change", applyGating);
+
+for (const b of document.querySelectorAll("#suseg button"))
+  b.addEventListener("click", async () => {
+    const t = await run(`su ${b.dataset.su}`);
+    if (!/su\s*=/.test(t)) await run("su", { quiet: true });
+  });
+
+on("eepreset", "change", e => {
+  if (!e.target.value) return;
+  const [a, n] = e.target.value.split(",");
+  $("eeaddr").value = a; $("eelen").value = n;
+  e.target.value = "";
+});
+on("dsppreset", "change", e => {
+  if (!e.target.value) return;
+  const [a, b] = e.target.value.split(",");
+  $("dspa").value = a; $("dspb").value = b;
+  e.target.value = "";
+});
+
+on("btnfileloc", "click", async () => {
+  const lines = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = await run(`fileLoc ${i}`, { quiet: true });
+    lines.push(`${String(i).padStart(2)}  ${t.replace(/[\r\n]+/g, " ").trim()}`);
+    log("rx", `fileLoc ${i}: ${t.replace(/[\r\n]+/g, " ").trim()}`);
+  }
+  $("eeout").textContent = lines.join("\n");
+});
+
+/* ---- EEPROM ---- */
+let eeLast = null;
+const num = s => {
+  const t = String(s).trim();
+  return /^0x/i.test(t) ? parseInt(t, 16) : parseInt(t, 10);
+};
+
+/* The device prints rows aligned down to 16 bytes and fills the cells before the
+   requested address with `--`, so rows are keyed by address, not by position. */
+function parseEERows(text, into) {
+  for (const m of text.matchAll(/^([0-9A-Fa-f]{4,6}):\s+((?:(?:[0-9A-Fa-f]{2}|--)[ \t]*)+)/gm)) {
+    const base = parseInt(m[1], 16);
+    m[2].trim().split(/\s+/).forEach((tok, i) => {
+      if (tok !== "--") into.set(base + i, parseInt(tok, 16));
+    });
+  }
+}
+async function eeRead(addr, count) {
+  const got = new Map();
+  for (let off = 0; off < count; off += 256) {
+    const a = addr + off, n = Math.min(256, count - off);
+    for (let tries = 0; tries < 4; tries++) {
+      const t = await run(`getEE 0x${a.toString(16).toUpperCase()} ${n}`, { quiet: true, wait: 1200, idle: 220 });
+      parseEERows(t, got);
+      let done = true;
+      for (let i = 0; i < n; i++) if (!got.has(a + i)) { done = false; break; }
+      if (done) break;
+    }
+  }
+  const out = new Uint8Array(count);
+  let missing = 0;
+  for (let i = 0; i < count; i++) {
+    if (got.has(addr + i)) out[i] = got.get(addr + i); else { out[i] = 0; missing++; }
+  }
+  return { bytes: out, missing };
+}
+function hexdump(addr, bytes) {
+  const lines = [];
+  for (let i = 0; i < bytes.length; i += 16) {
+    const row = bytes.subarray(i, i + 16);
+    const hex = Array.from(row, b => b.toString(16).padStart(2, "0")).join(" ").padEnd(47);
+    const asc = Array.from(row, b => (b >= 32 && b < 127) ? String.fromCharCode(b) : ".").join("");
+    lines.push((addr + i).toString(16).toUpperCase().padStart(5, "0") + ": " + hex + " |" + asc + "|");
+  }
+  return lines.join("\n");
+}
+on("btneeread", "click", async () => {
+  const addr = num($("eeaddr").value), count = Math.max(1, num($("eelen").value));
+  if (isNaN(addr)) { log("er", "bad address"); return; }
+  $("eeout").textContent = "reading…";
+  log("sys", `getEE 0x${addr.toString(16).toUpperCase()} +${count}`);
+  const { bytes, missing } = await eeRead(addr, count);
+  eeLast = { addr, bytes };
+  $("btneesave").disabled = false;
+  $("eeout").textContent = hexdump(addr, bytes) + (missing ? `\n\n(${missing} byte(s) never returned; shown as 00)` : "");
+});
+on("btneesave", "click", () => {
+  if (!eeLast) return;
+  const url = URL.createObjectURL(new Blob([eeLast.bytes], { type: "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mv7-ee-0x${eeLast.addr.toString(16).toUpperCase()}-${eeLast.bytes.length}.bin`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+/* ---- DSP memory ---- */
+on("btndspread", "click", async () => {
+  const a = $("dspa").value.trim(), b = $("dspb").value.trim();
+  $("dspout").textContent = "reading…";
+  const t = await run(`getDSP ${a}${b ? " " + b : ""}`, { wait: 1500, idle: 250 });
+  $("dspout").textContent = t.trim() || "(no reply)";
+});
+
+/* ---- refresh everything ---- */
+on("btnrefresh", "click", refreshAll);
+async function refreshAll() {
+  if (!mv7) return;
+  log("sys", "refreshing device state");
+  await run("su", { quiet: true }).then(applyState);
+  const seq = [
+    ["fwVersion",0],["dspVersion",0],["pkgVersion",0],["serialNum",1],["getSN",1],["getSAPSN",1],
+    ["myCID",1],["deviceType",2],["interfaceId",2],
+    ["micMute",0],["audioMute",0],["volume",0],["inputGain",0],
+    ["dspMode",1],["lock",2],["dimMode",2],["meterMode",2],
+    ["getSampleRate",1],["rateMismatch",1],
+  ];
+  for (const [cmd, need] of seq) {
+    if (level == null || level < need) continue;
+    const t = await run(cmd, { quiet: true });
+    if (!t.trim()) continue;
+    const kv = applyState(t);
+    if (Object.keys(kv).length === 0 && CMD_BY_NAME.has(cmd)) setInfo(cmd, valueOf(t, cmd));
+    log("rx", `${cmd}: ${t.replace(/[\r\n]+/g, " ").trim()}`);
+  }
+  if (level != null && level >= 2) for (const b of BLOCKS) await readBlock(b);
+  log("sys", "refresh done");
+}
+
+/* =========================================================================
+   Terminal input
+   ========================================================================= */
+const hist = [];
+let histIdx = -1;
+try { hist.push(...JSON.parse(localStorage.getItem("mv7hist") || "[]")); } catch (_) {}
+histIdx = hist.length;
+
+$("cmdline").addEventListener("keydown", e => {
+  const input = e.target;
+  if (e.key === "Enter") {
+    const line = input.value.trim();
+    input.value = "";
+    if (!line) return;
+    hist.push(line); histIdx = hist.length;
+    try { localStorage.setItem("mv7hist", JSON.stringify(hist.slice(-200))); } catch (_) {}
+    if (line.startsWith("/")) { localCmd(line); return; }
+    run(line);
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (histIdx > 0) { histIdx--; input.value = hist[histIdx]; }
+  } else if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (histIdx < hist.length - 1) { histIdx++; input.value = hist[histIdx]; }
+    else { histIdx = hist.length; input.value = ""; }
+  } else if (e.key === "Tab") {
+    e.preventDefault();
+    const parts = input.value.split(/\s+/);
+    if (parts.length !== 1) return;
+    const pre = parts[0];
+    const hits = CMDS.map(c => c[0]).filter(n => n.startsWith(pre) && n !== "?");
+    if (hits.length === 1) input.value = hits[0] + " ";
+    else if (hits.length > 1) {
+      let common = hits[0];
+      for (const h of hits) while (!h.startsWith(common)) common = common.slice(0, -1);
+      input.value = common;
+      log("sys", hits.join("  "));
+    }
+  }
+});
+on("btnsend", "click", () => {
+  const line = $("cmdline").value.trim();
+  $("cmdline").value = "";
+  if (line) line.startsWith("/") ? localCmd(line) : run(line);
+});
+
+function localCmd(line) {
+  const [c] = line.slice(1).split(/\s+/);
+  if (c === "help" || c === "?") {
+    log("sys", "local: /help /clear /levels /raw   —   everything else goes to the device");
+    log("sys", "command table (48 entries, level shown; hidden ones are not listed by `help`)");
+    for (const [n, a, h, l] of CMDS)
+      log("rx", `${LEVELS[l]} ${String(l)}  ${n.padEnd(14)} ${(a || "").padEnd(40)} ${h}`);
+  } else if (c === "clear") { term.innerHTML = ""; }
+  else if (c === "levels") { log("sys", "0 nor · 1 dev · 2 adm (power-on) · 3 sup — `su <name>`, no password"); }
+  else if (c === "raw") { $("optraw").checked = !$("optraw").checked; log("sys", "raw reports " + ($("optraw").checked ? "on" : "off")); }
+  else log("er", "unknown local command: " + line);
+}
+
+on("btnclear", "click", () => term.innerHTML = "");
+on("btncopy", "click", async () => {
+  const text = Array.from(term.children, n => n.textContent).join("\n");
+  try { await navigator.clipboard.writeText(text); log("sys", "console copied"); }
+  catch (_) { log("er", "clipboard blocked by the browser"); }
+});
+
+/* =========================================================================
+   Connect / disconnect
+   ========================================================================= */
+async function attach(device) {
+  mv7 = new MV7(device);
+  mv7.onEvent = text => {
+    if ($("optevents").checked) log("ev", text.trim());
+    applyState(text);
+  };
+  mv7.onRaw = (dir, bytes) => {
+    if ($("optraw").checked) log("raw", `${dir} ${hexdumpBytes(bytes)}`);
+  };
+  mv7.onBusy = b => $("qdepth").textContent = b ? "busy" : "idle";
+  await mv7.open();
+  setStatus(true, device.productName || "Shure MV7");
+  log("sys", `opened ${device.productName || "device"} — vendor collection FF00/01, 64-byte reports`);
+  await run("su", { quiet: true }).then(applyState);
+  await refreshAll();
+}
+
+const isMV7 = d => d.vendorId === VID && d.productId === PID &&
+                   d.collections.some(c => c.usagePage === USAGE_PAGE);
+
+on("btnconnect", "click", async () => {
+  try {
+    /* Reuse a permission this origin already holds; only prompt when there is none. */
+    let d = (await navigator.hid.getDevices()).find(isMV7);
+    if (!d) {
+      [d] = await navigator.hid.requestDevice({
+        filters: [{ vendorId: VID, productId: PID, usagePage: USAGE_PAGE, usage: USAGE }],
+      });
+    }
+    if (!d) return;
+    await attach(d);
+  } catch (err) {
+    const msg = String(err.message || err);
+    log("er", "connect failed: " + msg);
+    if (/open/i.test(msg)) {
+      /* The chooser lists the device from sysfs, which needs no permission; open()
+         touches the node itself. On Linux that node is root-only by default. */
+      log("sys", "the device was found but could not be opened. Two usual causes:");
+      log("sys", "1. another program holds it — MOTIV Mix, or a tools/mv7ctl.py still running");
+      log("sys", "2. Linux: /dev/hidraw* is root-only. Add a udev rule (see the note at the " +
+                 "foot of this page), or for one session: sudo setfacl -m u:$USER:rw /dev/hidrawN");
+    }
+  }
+});
+on("btndisconnect", "click", async () => {
+  if (mv7) await mv7.close();
+  mv7 = null;
+  setStatus(false);
+  log("sys", "closed");
+});
+
+if (!("hid" in navigator)) {
+  $("c-unsupported").style.display = "";
+  $("btnconnect").disabled = true;
+  log("er", "navigator.hid is not available in this browser / origin");
+} else {
+  navigator.hid.addEventListener("disconnect", e => {
+    if (mv7 && e.device === mv7.dev) { mv7 = null; setStatus(false); log("er", "device disconnected"); }
+  });
+  window.addEventListener("load", async () => {
+    if ((await navigator.hid.getDevices()).some(isMV7)) {
+      $("btnconnect").textContent = "Connect (permitted)";
+      log("sys", "an MV7 this page already has permission for is attached — press Connect");
+    }
+  });
+}
+
+log("sys", "Shure MV7 WebHID console. Connect, then use the panels or type a command.");
+log("sys", "/help lists the local commands and the full 48-entry device command table.");
+setStatus(false);
+</script>
+</body>
+</html>
