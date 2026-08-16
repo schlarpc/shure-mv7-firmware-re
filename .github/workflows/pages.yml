@@ -1,7 +1,8 @@
 name: Publish the WebHID console to GitHub Pages
 
-# The site is the single file in web/. Set Settings -> Pages -> Source to
-# "GitHub Actions" once, then every push to main publishes it.
+# The site is the single file in web/. Every push to main publishes it.
+# The configure step turns Pages on if the repository does not have it yet,
+# so a fresh clone or a fork needs no manual setting.
 
 on:
   push:
@@ -32,6 +33,8 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload web/
         uses: actions/upload-pages-artifact@v3
